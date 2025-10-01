@@ -17,12 +17,12 @@ const scaleVertical = (size) => (size / DESIGN_HEIGHT) * deviceHeight;
 const CONFIG = {
 
   IMAGE_SECTION_HEIGHT: 0.70,
-  PANEL_HEIGHT_RATIO: 0.9, 
-  TEXT_SECTION_HEIGHT: 0.25,
-  HEADLINE_FONT_SIZE: scale(66),
-  DESCRIPTION_FONT_SIZE: scale(32), 
+  PANEL_HEIGHT_RATIO: 1.15, 
+  TEXT_SECTION_HEIGHT: 0.40,
+  HEADLINE_FONT_SIZE: scale(86),
+  DESCRIPTION_FONT_SIZE: scale(40), 
   PANEL_WIDTH: scale(290),
-  PANEL_GAP: scale(35),
+  PANEL_GAP: scale(45),
   
 };
 
@@ -237,40 +237,51 @@ const styles = StyleSheet.create({
     width: PANEL_WIDTH * 3, 
     height: '100%',
   },
+
+  // text editing
   textSection: {
     height: deviceHeight * CONFIG.TEXT_SECTION_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: scale(40),
-    paddingBottom: scaleVertical(40),
+    paddingBottom: scaleVertical(560),
   },
   headline: {
     fontSize: CONFIG.HEADLINE_FONT_SIZE, 
     fontWeight: '900',
-    color: '#111111',
+    color: '#000000ff',
     textAlign: 'center',
     marginBottom: scale(26),
-    lineHeight: scale(52), 
-    letterSpacing: -0.3,
-    fontFamily: 'arial',
+    lineHeight: scale(92), 
+    letterSpacing: 0.5,
+    style: 'semi-bold',
+    fontFamily: 'Poppins',
   },
   description: {
     fontSize: CONFIG.DESCRIPTION_FONT_SIZE, 
     fontWeight: '600',
-    color: '#9B9B9B',
+    color: '#A2A5AD',
+    style: 'medium',
+    fontFamily: 'Poppins',
     textAlign: 'center',
-    lineHeight: scale(36),
-    letterSpacing: -0.2,
+    lineHeight: scale(46),
+    letterSpacing: 0,
     maxWidth: scale(760),
-    marginBottom: scaleVertical(30),
+    marginBottom: scaleVertical(10),
   },
-  bottomNavigation: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
+bottomNavigation: {
+  width: '100%',
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  position: 'absolute',  // stick to bottom
+  bottom: scaleVertical(300), // distance from bottom
+  left: 0,
+  right: 0,
+  paddingHorizontal: scale(20),
+  zIndex: 10,
+},
+
   paginationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,10 +290,10 @@ const styles = StyleSheet.create({
   },
   // dot OR indicator :/
   paginationDot: {
-    width: scale(50),
-    height: scale(18),
-    borderRadius: scale(14),
-    marginHorizontal: scale(4),
+    width: scale(70),
+    height: scale(24),
+    borderRadius: scale(24),
+    marginHorizontal: scale(8),
   },
   activeDot: {
     backgroundColor: '#4B75E9',
@@ -295,27 +306,28 @@ const styles = StyleSheet.create({
 
    skipButton: {
     paddingVertical: scale(10),
-    paddingHorizontal: scale(20),
+    paddingHorizontal: scale(25),
     position: 'absolute',
-    left: scale(30), 
+    left: scale(90), 
     zIndex: 10,
   },
   skipButtonText: {
-    fontSize: scale(38),
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '400',
+    fontFamily: 'Poppins',
     color: '#000000ff',
   },
 
   //button :)
   ctaButton: {
-    width: scale(96),
-    height: scale(96),
+    width: scale(142),
+    height: scale(142),
     borderRadius: scale(98),
     backgroundColor: '#4B75E9',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
-    right: 0,
+    right: scale(40),
     shadowColor: '#4B75E9',
     shadowOffset: { width: 0, height: scale(4) },
     shadowOpacity: 0.3,
