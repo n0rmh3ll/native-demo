@@ -6,21 +6,17 @@ const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }) {
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      {/* Header Section - Top 60% */}
+      
       <View style={styles.headerSection}>
         <ImageBackground 
           source={require('../assets/images/beach-bg.jpg')}
-
           style={styles.backgroundImage}
           resizeMode="cover"
         >
-          {/* Semi-transparent white overlay */}
           <View style={styles.overlay} />
-          
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <Text style={styles.logo}>
               <Text style={styles.logoV}>V</Text>
@@ -30,27 +26,29 @@ export default function WelcomeScreen({ navigation }) {
         </ImageBackground>
       </View>
 
-      {/* Content Section - Bottom 40% */}
+    
       <View style={styles.contentSection}>
-        {/* Headline */}
-        <Text style={styles.headline}>Your Perfect Stay is Just a Click Away!</Text>
-        
-        {/* Description */}
-        <Text style={styles.description}>
-          Lorem ipsum dolor sit amet consectetur.{"\n"}
-          Lectus dictum ut nunc sodales a.{"\n"}
-          Nibh tortor malesuada amet.
-        </Text>
+        <View style={styles.contentWrapper}>
+          
+          <Text style={styles.headline}>Your Perfect Stay is Just a Click Away!</Text>
+          
+          
+          <Text style={styles.description}>
+            Lorem ipsum dolor sit amet consectetur.{"\n"}
+            Lectus dictum ut nunc sodales a.{"\n"}
+            Nibh tortor malesuada amet.
+          </Text>
 
-        {/* Primary Button */}
-        <TouchableOpacity 
-          style={styles.registerButton}
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.registerButtonText}>Register</Text>
-        </TouchableOpacity>
+       
+          <TouchableOpacity 
+            style={styles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.registerButtonText}>Register</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Footer */}
+       
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Already have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -68,7 +66,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   headerSection: {
-    height: height * 0.6, // 60% of screen
+    height: height * 0.45, 
     width: '100%',
   },
   backgroundImage: {
@@ -79,67 +77,70 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Semi-transparent white overlay
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
-logoContainer: {
-  position: 'absolute',
-  top: 410, 
-  left: 0,
-  right: 0,
-  alignItems: 'center',
-},
-  logo: {
-    fontSize: 72,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  logoV: {
-    color: '#556EE6', // Vibrant medium blue
-  },
-  logoOya: {
-    color: '#000000', // Black
-  },
-  contentSection: {
-    height: height * 0.4, // 40% of screen
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 32,
-    paddingTop: 40,
-    paddingBottom: 20,
-    justifyContent: 'flex-start',
+  logoContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
     alignItems: 'center',
   },
+  logo: {
+    fontSize: width * 0.16, 
+    fontWeight: '900',
+    letterSpacing: -1,
+    fontFamily: 'Poppins',
+  },
+  logoV: {
+    color: '#556EE6',
+  },
+  logoOya: {
+    color: '#000000',
+  },
+  contentSection: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 32,
+    justifyContent: 'space-between', 
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20,
+  },
   headline: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: width * 0.06, 
+    fontWeight: '900',
     color: '#000000',
     textAlign: 'center',
     marginBottom: 16,
-    lineHeight: 32,
-    letterSpacing: -0.5,
+    lineHeight: width * 0.08,
+    fontFamily: 'Poppins',
+    maxWidth: '90%',
   },
   description: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#666666', // Medium gray
+    fontSize: width * 0.04, 
+    fontWeight: '600',
+    color: '#A2A5AD',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: width * 0.05,
     marginBottom: 32,
-    letterSpacing: -0.2,
+    fontFamily: 'Poppins',
+    maxWidth: '90%',
   },
   registerButton: {
-    backgroundColor: '#556EE6', // Brand blue
-    paddingVertical: 18,
+    backgroundColor: '#4B75E9',
+    paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 24,
     width: '100%',
     maxWidth: 280,
-    shadowColor: '#556EE6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    alignSelf: 'center',
+    shadowColor: '#4B75E9',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -148,24 +149,25 @@ logoContainer: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: -0.2,
+    fontFamily: 'Poppins',
   },
   footerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 'auto',
+    paddingVertical: 20,
+    marginBottom: 10, 
   },
   footerText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#666666', // Dark gray
-    letterSpacing: -0.2,
+    color: '#666666',
+    fontFamily: 'Poppins',
   },
   footerLink: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#556EE6', // Brand blue
-    letterSpacing: -0.2,
+    color: '#4B75E9',
+    fontFamily: 'Poppins',
   },
 });

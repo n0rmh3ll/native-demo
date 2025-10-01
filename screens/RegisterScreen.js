@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+
+const { width, height } = Dimensions.get('window');
+
+const responsiveWidth = (percentage) => (percentage * width) / 100;
+const responsiveHeight = (percentage) => (percentage * height) / 100;
+const responsiveFont = (percentage) => (percentage * width) / 100;
 
 export default function RegisterScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
@@ -26,26 +32,27 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header with Back Button */}
+    
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000000" />
+          <Ionicons name="arrow-back" size={responsiveFont(6)} color="#000000" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Header Text */}
+    
+      <View style={styles.contentSection}>
+        <View style={styles.contentWrapper}>
+         
           <Text style={styles.title}>Let's Get Started</Text>
           <Text style={styles.subtitle}>Create an account to continue.</Text>
 
-          {/* Full Name Input */}
+          
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="person-outline" size={responsiveFont(5)} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Full Name"
@@ -56,10 +63,10 @@ export default function RegisterScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Email Input */}
+       
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={responsiveFont(5)} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="wadewarren123@gmail.com"
@@ -72,10 +79,10 @@ export default function RegisterScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Password Input */}
+          
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={responsiveFont(5)} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -85,15 +92,18 @@ export default function RegisterScreen({ navigation }) {
                 placeholderTextColor="#999"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#666" />
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={responsiveFont(5)} 
+                  color="#666" 
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={responsiveFont(5)} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm Password"
@@ -103,12 +113,16 @@ export default function RegisterScreen({ navigation }) {
                 placeholderTextColor="#999"
               />
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#666" />
+                <Ionicons 
+                  name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={responsiveFont(5)} 
+                  color="#666" 
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Terms Checkbox */}
+         
           <View style={styles.termsContainer}>
             <View style={styles.checkboxContainer}>
               <TouchableOpacity 
@@ -123,38 +137,37 @@ export default function RegisterScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Register Button */}
+          
           <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
 
-          {/* Divider */}
+      
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>Or</Text>
             <View style={styles.divider} />
           </View>
 
-          {/* Social Login Buttons */}
           <View style={styles.socialContainer}>
             <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-google" size={20} color="#666" />
+              <Ionicons name="logo-google" size={responsiveFont(5)} color="#DB4437" />-
               <Text style={styles.socialButtonText}>Google</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-facebook" size={20} color="#666" />
+              <Ionicons name="logo-facebook" size={responsiveFont(5)} color="#1877F2" />
               <Text style={styles.socialButtonText}>Facebook</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
 
-      {/* Footer Link */}
-      <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.footerLink}>Log In</Text>
-        </TouchableOpacity>
+       
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.footerLink}>Log In</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -166,72 +179,76 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingHorizontal: responsiveWidth(5),
+    paddingTop: responsiveHeight(2),
+    paddingBottom: responsiveHeight(1),
   },
   backButton: {
-    padding: 5,
+    padding: responsiveWidth(1),
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
+  contentSection: {
     flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 20,
+    paddingHorizontal: responsiveWidth(8),
+    justifyContent: 'space-between',
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    paddingTop: responsiveHeight(2),
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: responsiveFont(7),
+    fontWeight: '900',
     color: '#000000',
     textAlign: 'center',
-    marginBottom: 8,
-    fontFamily: 'System',
+    marginBottom: responsiveHeight(1),
+    fontFamily: 'Poppins',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: responsiveFont(4),
+    fontWeight: '600',
+    color: '#A2A5AD',
     textAlign: 'center',
-    marginBottom: 40,
-    fontFamily: 'System',
+    marginBottom: responsiveHeight(5),
+    fontFamily: 'Poppins',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: responsiveHeight(2),
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#F9F9F9',
+    borderRadius: responsiveWidth(3),
+    paddingHorizontal: responsiveWidth(4),
+    backgroundColor: 'transparent',
+    height: responsiveHeight(6),
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: responsiveWidth(3),
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
+    fontSize: responsiveFont(4),
     color: '#000000',
-    fontFamily: 'System',
+    fontFamily: 'Poppins',
+    paddingVertical: 0, 
   },
   termsContainer: {
-    marginBottom: 30,
+    marginBottom: responsiveHeight(3),
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkbox: {
-    width: 20,
-    height: 20,
+    width: responsiveWidth(5),
+    height: responsiveWidth(5),
     borderWidth: 1,
     borderColor: '#4B75E9',
-    borderRadius: 4,
-    marginRight: 10,
+    borderRadius: responsiveWidth(1),
+    marginRight: responsiveWidth(2.5),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -240,13 +257,15 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: responsiveFont(3),
     fontWeight: 'bold',
   },
   termsText: {
-    fontSize: 14,
+    fontSize: responsiveFont(3.5),
     color: '#666666',
-    fontFamily: 'System',
+    fontFamily: 'Poppins',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   termsLink: {
     color: '#4B75E9',
@@ -254,21 +273,26 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: '#4B75E9',
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: responsiveHeight(2),
+    borderRadius: responsiveWidth(3),
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: responsiveHeight(3),
+    shadowColor: '#4B75E9',
+    shadowOffset: { width: 0, height: responsiveHeight(0.5) },
+    shadowOpacity: 0.3,
+    shadowRadius: responsiveWidth(2),
+    elevation: 6,
   },
   registerButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'System',
+    fontSize: responsiveFont(4.5),
+    fontWeight: '700',
+    fontFamily: 'Poppins',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: responsiveHeight(3),
   },
   divider: {
     flex: 1,
@@ -276,15 +300,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5E5',
   },
   dividerText: {
-    marginHorizontal: 15,
+    marginHorizontal: responsiveWidth(3),
     color: '#666666',
-    fontSize: 14,
-    fontFamily: 'System',
+    fontSize: responsiveFont(3.5),
+    fontFamily: 'Poppins',
   },
   socialContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
+    marginBottom: responsiveHeight(2),
   },
   socialButton: {
     flex: 1,
@@ -293,37 +317,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginHorizontal: 5,
+    borderRadius: responsiveWidth(3),
+    paddingVertical: responsiveHeight(1.5),
+    marginHorizontal: responsiveWidth(1),
     backgroundColor: '#FFFFFF',
   },
   socialButtonText: {
-    fontSize: 16,
+    fontSize: responsiveFont(4),
     color: '#000000',
     fontWeight: '500',
-    marginLeft: 8,
-    fontFamily: 'System',
+    marginLeft: responsiveWidth(2),
+    fontFamily: 'Poppins',
   },
   footerContainer: {
-    paddingHorizontal: 30,
-    paddingBottom: 60,
-    paddingTop: 20,
+    paddingVertical: responsiveHeight(2),
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: responsiveHeight(2), 
   },
   footerText: {
-    fontSize: 14,
+    fontSize: responsiveFont(3.5),
     color: '#666666',
-    fontFamily: 'System',
+    fontFamily: 'Poppins',
   },
   footerLink: {
-    fontSize: 14,
+    fontSize: responsiveFont(3.5),
     color: '#4B75E9',
     fontWeight: '600',
-    fontFamily: 'System',
+    fontFamily: 'Poppins',
   },
 });

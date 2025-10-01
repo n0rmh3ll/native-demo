@@ -8,7 +8,11 @@ import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+const responsiveWidth = (percentage) => (percentage * screenWidth) / 100;
+const responsiveHeight = (percentage) => (percentage * screenHeight) / 100;
+const responsiveFont = (percentage) => (percentage * screenWidth) / 100;
 
 export default function AppNavigator() {
   return (
@@ -17,25 +21,27 @@ export default function AppNavigator() {
         tabBarStyle: {
           backgroundColor: '#F4F7FF',
           width: screenWidth,
-          height: 70,
+          height: responsiveHeight(10), 
           borderTopWidth: 1,
           borderTopColor: '#A2A5AD',
           opacity: 1,
           position: 'absolute',
           bottom: 0,
+          paddingHorizontal: responsiveWidth(2),
         },
         tabBarItemStyle: {
-          height: 70,
-          paddingVertical: 10,
+          height: responsiveHeight(8),
+          paddingVertical: responsiveHeight(1),
         },
         tabBarActiveTintColor: '#4B75E9',
         tabBarInactiveTintColor: '#A2A5AD',
         tabBarShowLabel: true,
         headerShown: false,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginBottom: 8,
+          fontSize: responsiveFont(3), 
+          fontWeight: '600',
+          marginBottom: responsiveHeight(0.9),
+          fontFamily: 'Poppins',
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -50,7 +56,7 @@ export default function AppNavigator() {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={responsiveFont(4.5)} color={color} />;
         },
       })}
     >

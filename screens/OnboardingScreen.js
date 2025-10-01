@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import onboardingData from './onboardingData';
 
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
-const PANEL_WIDTH = deviceWidth * 0.25; // 25% of screen width
+const PANEL_WIDTH = deviceWidth * 0.25; 
 
 export default function OnboardingScreen({ onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,7 +38,7 @@ export default function OnboardingScreen({ onFinish }) {
       <View style={styles.imageSection}>
         {/* Three Panel Layout */}
         <View style={styles.panelContainer}>
-          {/* Left Panel - Show left part of image */}
+        
           <View style={[styles.panel, styles.leftPanel]}>
             <Image 
               source={{ uri: item.image }} 
@@ -46,7 +46,7 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.panelImage,
                 { 
                   transform: [
-                    { translateX: -PANEL_WIDTH * 0 } // Show first section
+                    { translateX: -PANEL_WIDTH * 0 } 
                   ] 
                 }
               ]} 
@@ -54,7 +54,7 @@ export default function OnboardingScreen({ onFinish }) {
             />
           </View>
           
-          {/* Center Panel - Show middle part of image */}
+         
           <View style={[styles.panel, styles.centerPanel]}>
             <Image 
               source={{ uri: item.image }} 
@@ -62,7 +62,7 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.panelImage,
                 { 
                   transform: [
-                    { translateX: -PANEL_WIDTH * 1 } // Show second section
+                    { translateX: -PANEL_WIDTH * 1 } 
                   ] 
                 }
               ]} 
@@ -70,7 +70,7 @@ export default function OnboardingScreen({ onFinish }) {
             />
           </View>
           
-          {/* Right Panel - Show right part of image */}
+      
           <View style={[styles.panel, styles.rightPanel]}>
             <Image 
               source={{ uri: item.image }} 
@@ -78,7 +78,7 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.panelImage,
                 { 
                   transform: [
-                    { translateX: -PANEL_WIDTH * 2 } // Show third section
+                    { translateX: -PANEL_WIDTH * 2 } 
                   ] 
                 }
               ]} 
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '3deg' }],
   },
   panelImage: {
-    width: PANEL_WIDTH * 3, // Make image 3x wider to show all sections
+    width: PANEL_WIDTH * 3, 
     height: '100%',
   },
   textSection: {
