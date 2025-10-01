@@ -1,63 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, FlatList, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import onboardingData from './onboardingData';
 
-
-const DESIGN_WIDTH = 1080;
-const DESIGN_HEIGHT = 1920;
-
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
-
-const scale = (size) => (size / DESIGN_WIDTH) * deviceWidth;
-const scaleVertical = (size) => (size / DESIGN_HEIGHT) * deviceHeight;
-
-
-const CONFIG = {
-
-  IMAGE_SECTION_HEIGHT: 0.70,
-  PANEL_HEIGHT_RATIO: 1.15, 
-  TEXT_SECTION_HEIGHT: 0.40,
-  HEADLINE_FONT_SIZE: scale(86),
-  DESCRIPTION_FONT_SIZE: scale(40), 
-  PANEL_WIDTH: scale(290),
-  PANEL_GAP: scale(45),
-  
-};
-
-
-const PANEL_WIDTH = CONFIG.PANEL_WIDTH;
-const PANEL_HEIGHT = scaleVertical(680) * CONFIG.PANEL_HEIGHT_RATIO;
-const TOP_MARGIN = scaleVertical(80); 
-const PANEL_GAP = CONFIG.PANEL_GAP;
-const SIDE_MARGIN = (deviceWidth - (PANEL_WIDTH * 3 + PANEL_GAP * 2)) / 2;
-const CORNER_RADIUS = scale(48);
+const PANEL_WIDTH = deviceWidth * 0.25; // 25% of screen width
 
 export default function OnboardingScreen({ onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const handleNext = () => {
     if (currentIndex < onboardingData.length - 1) {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        flatListRef.current.scrollToIndex({ 
-          index: currentIndex + 1,
-          animated: false 
-        });
-        setCurrentIndex(currentIndex + 1);
-        
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
+      flatListRef.current.scrollToIndex({ 
+        index: currentIndex + 1,
+        animated: true 
       });
+      setCurrentIndex(currentIndex + 1);
     } else {
       onFinish();
     }
@@ -75,94 +35,96 @@ export default function OnboardingScreen({ onFinish }) {
 
   const renderItem = ({ item, index }) => (
     <View style={styles.slide}>
-      <View style={styles.whiteBackground}>
-        
-
-        <View style={styles.imageSection}>
-          {/* Three Panel Layout */}
-          <View style={styles.panelContainer}>
-            {/* Left Panel - Rotated -8° */}
-            <View style={[styles.panel, styles.leftPanel]}>
-              <Image 
-                source={{ uri: item.image }} 
-                style={[
-                  styles.panelImage,
-                  { transform: [{ translateX: -PANEL_WIDTH * 0 }] }
-                ]} 
-                resizeMode="cover" 
-              />
-            </View>
-            
-            {/* Center Panel - Rotated -2° */}
-            <View style={[styles.panel, styles.centerPanel]}>
-              <Image 
-                source={{ uri: item.image }} 
-                style={[
-                  styles.panelImage,
-                  { transform: [{ translateX: -PANEL_WIDTH * 1 }] }
-                ]} 
-                resizeMode="cover" 
-              />
-            </View>
-            
-            {/* Right Panel - Rotated +6° */}
-            <View style={[styles.panel, styles.rightPanel]}>
-              <Image 
-                source={{ uri: item.image }} 
-                style={[
-                  styles.panelImage,
-                  { transform: [{ translateX: -PANEL_WIDTH * 2 }] }
-                ]} 
-                resizeMode="cover" 
-              />
-            </View>
+      <View style={styles.imageSection}>
+        {/* Three Panel Layout */}
+        <View style={styles.panelContainer}>
+          {/* Left Panel - Show left part of image */}
+          <View style={[styles.panel, styles.leftPanel]}>
+            <Image 
+              source={{ uri: item.image }} 
+              style={[
+                styles.panelImage,
+                { 
+                  transform: [
+                    { translateX: -PANEL_WIDTH * 0 } // Show first section
+                  ] 
+                }
+              ]} 
+              resizeMode="cover" 
+            />
+          </View>
+          
+          {/* Center Panel - Show middle part of image */}
+          <View style={[styles.panel, styles.centerPanel]}>
+            <Image 
+              source={{ uri: item.image }} 
+              style={[
+                styles.panelImage,
+                { 
+                  transform: [
+                    { translateX: -PANEL_WIDTH * 1 } // Show second section
+                  ] 
+                }
+              ]} 
+              resizeMode="cover" 
+            />
+          </View>
+          
+          {/* Right Panel - Show right part of image */}
+          <View style={[styles.panel, styles.rightPanel]}>
+            <Image 
+              source={{ uri: item.image }} 
+              style={[
+                styles.panelImage,
+                { 
+                  transform: [
+                    { translateX: -PANEL_WIDTH * 2 } // Show third section
+                  ] 
+                }
+              ]} 
+              resizeMode="cover" 
+            />
           </View>
         </View>
+      </View>
 
-        
-        <View style={styles.textSection}>
-          {/* Headline */}
-          <Text style={styles.headline}>{item.headline}</Text>
-          
-          {/* Body Text */}
-          <Text style={styles.description}>{item.description}</Text>
+      <View style={styles.textSection}>
+        <Text style={styles.headline}>{item.headline}</Text>
+        <Text style={styles.description}>{item.description}</Text>
 
-          
-          <View style={styles.bottomNavigation}>
-             {currentIndex < onboardingData.length - 1 && (
-              <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-                <Text style={styles.skipButtonText}>Skip</Text>
-              </TouchableOpacity>
-            )}
-            
-            <View style={styles.paginationContainer}>
-              {onboardingData.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.paginationDot,
-                    index === currentIndex ? styles.activeDot : styles.inactiveDot
-                  ]}
-                />
-              ))}
-            </View>
-
-  
-            <TouchableOpacity style={styles.ctaButton} onPress={handleNext}>
-              <Ionicons 
-                name={currentIndex === onboardingData.length - 1 ? "checkmark" : "arrow-forward"} 
-                size={scale(44)} 
-                color="#FFFFFF" 
-              />
+        <View style={styles.bottomNavigation}>
+          {currentIndex < onboardingData.length - 1 && (
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+              <Text style={styles.skipButtonText}>Skip</Text>
             </TouchableOpacity>
+          )}
+          
+          <View style={styles.paginationContainer}>
+            {onboardingData.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  index === currentIndex ? styles.activeDot : styles.inactiveDot
+                ]}
+              />
+            ))}
           </View>
+
+          <TouchableOpacity style={styles.ctaButton} onPress={handleNext}>
+            <Ionicons 
+              name={currentIndex === onboardingData.length - 1 ? "checkmark" : "arrow-forward"} 
+              size={24} 
+              color="#FFFFFF" 
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container}>
       <FlatList
         ref={flatListRef}
         data={onboardingData}
@@ -173,6 +135,7 @@ export default function OnboardingScreen({ onFinish }) {
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+        scrollEnabled={true}
       />
     </SafeAreaView>
   );
@@ -187,113 +150,82 @@ const styles = StyleSheet.create({
     width: deviceWidth,
     flex: 1,
   },
-  whiteBackground: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   imageSection: {
-    height: deviceHeight * CONFIG.IMAGE_SECTION_HEIGHT, 
+    height: '55%',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 20,
   },
   panelContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: TOP_MARGIN,
-    marginHorizontal: SIDE_MARGIN,
-    height: PANEL_HEIGHT,
+    height: '80%',
+    width: '100%',
   },
   panel: {
     width: PANEL_WIDTH,
-    height: PANEL_HEIGHT,
-    borderRadius: CORNER_RADIUS,
+    height: '100%',
+    borderRadius: 20,
     overflow: 'hidden',
-    marginHorizontal: PANEL_GAP / 2,
+    marginHorizontal: 10,
     backgroundColor: '#f8f8f8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: scale(10) },
-    shadowOpacity: 0.06,
-    shadowRadius: scale(24),
-    elevation: 4,
   },
-
-// Panel Rotations and Styles <3
-
   leftPanel: {
     transform: [{ rotate: '-5deg' }],
   },
   centerPanel: {
     transform: [{ rotate: '-2deg' }],
-    zIndex: 2,
-    shadowOpacity: 0.08,
-    shadowRadius: scale(28),
-    elevation: 6,
   },
   rightPanel: {
     transform: [{ rotate: '3deg' }],
   },
   panelImage: {
-    width: PANEL_WIDTH * 3, 
+    width: PANEL_WIDTH * 3, // Make image 3x wider to show all sections
     height: '100%',
   },
-
-  // text editing
   textSection: {
-    height: deviceHeight * CONFIG.TEXT_SECTION_HEIGHT,
+    height: '45%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: scale(40),
-    paddingBottom: scaleVertical(560),
+    paddingHorizontal: 20,
   },
   headline: {
-    fontSize: CONFIG.HEADLINE_FONT_SIZE, 
+    fontSize: 28,
     fontWeight: '900',
-    color: '#000000ff',
+    color: '#000000',
     textAlign: 'center',
-    marginBottom: scale(26),
-    lineHeight: scale(92), 
-    letterSpacing: 0.5,
-    style: 'semi-bold',
+    marginBottom: 16,
     fontFamily: 'Poppins',
   },
   description: {
-    fontSize: CONFIG.DESCRIPTION_FONT_SIZE, 
+    fontSize: 16,
     fontWeight: '600',
     color: '#A2A5AD',
-    style: 'medium',
     fontFamily: 'Poppins',
     textAlign: 'center',
-    lineHeight: scale(46),
-    letterSpacing: 0,
-    maxWidth: scale(760),
-    marginBottom: scaleVertical(10),
+    marginBottom: 30,
   },
-bottomNavigation: {
-  width: '100%',
-  flexDirection: 'row',
-  justifyContent: 'center',
-  alignItems: 'center',
-  position: 'absolute',  // stick to bottom
-  bottom: scaleVertical(300), // distance from bottom
-  left: 0,
-  right: 0,
-  paddingHorizontal: scale(20),
-  zIndex: 10,
-},
-
+  bottomNavigation: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    position: 'absolute',
+    bottom: 40,
+  },
   paginationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
+    flex: 1,
   },
-  // dot OR indicator :/
   paginationDot: {
-    width: scale(70),
-    height: scale(24),
-    borderRadius: scale(24),
-    marginHorizontal: scale(8),
+    width: 20,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 4,
   },
   activeDot: {
     backgroundColor: '#4B75E9',
@@ -301,37 +233,22 @@ bottomNavigation: {
   inactiveDot: {
     backgroundColor: '#E5E5E5',
   },
-
-  //skip bro 
-
-   skipButton: {
-    paddingVertical: scale(10),
-    paddingHorizontal: scale(25),
-    position: 'absolute',
-    left: scale(90), 
-    zIndex: 10,
+  skipButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   skipButtonText: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '400',
     fontFamily: 'Poppins',
-    color: '#000000ff',
+    color: '#000000',
   },
-
-  //button :)
   ctaButton: {
-    width: scale(142),
-    height: scale(142),
-    borderRadius: scale(98),
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#4B75E9',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    right: scale(40),
-    shadowColor: '#4B75E9',
-    shadowOffset: { width: 0, height: scale(4) },
-    shadowOpacity: 0.3,
-    shadowRadius: scale(8),
-    elevation: 6,
   },
 });
