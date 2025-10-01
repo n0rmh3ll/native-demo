@@ -163,6 +163,8 @@ const styles = StyleSheet.create({
     height: '80%',
     width: '100%',
   },
+
+  //panel bro :)
   panel: {
     width: PANEL_WIDTH,
     height: '100%',
