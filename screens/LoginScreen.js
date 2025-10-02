@@ -9,9 +9,9 @@ const responsiveWidth = (percentage) => (percentage * width) / 100;
 const responsiveHeight = (percentage) => (percentage * height) / 100;
 const responsiveFont = (percentage) => (percentage * width) / 100;
 
-export default function LoginScreen({ navigation }) {
+export default function AuthNavigator({ navigation }) {
   const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,7 +30,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = () => {
     if (email === 'admin@admin.com' && password === 'admin') {
       showModal('success', 'Success!', 'Login successful!', () => {
-        navigation.navigate('MainApp');
+        navigation.navigate('MainTabs');
       });
     } else {
       showModal('error', 'Error', 'Invalid credentials. Use admin@admin.com / admin');
@@ -106,7 +106,6 @@ export default function LoginScreen({ navigation }) {
       
       <View style={styles.contentSection}>
         <View style={styles.contentWrapper}>
-          {/* Header Text */}
           <Text style={styles.title}>Welcome Back!</Text>
           <Text style={styles.subtitle}>Log in to continue.</Text>
 

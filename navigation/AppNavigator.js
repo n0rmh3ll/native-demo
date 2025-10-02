@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+// AppNavigator.js - Fixed version
+import React from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Dimensions, View } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import { HotelDetailsScreen, ELYSIUM_GARDENS_DETAILS } from '../screens/HomeScreen';
-
 import CalendarScreen from '../screens/CalendarScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -13,23 +13,37 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Tab = createMaterialTopTabNavigator();
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-function responsiveWidth(p) { return (p * screenWidth) / 100; }
-function responsiveHeight(p) { return (p * screenHeight) / 100; }
-function responsiveFont(p) { return (p * screenWidth) / 100; }
+const responsiveWidth = (percentage) => {
+  return (percentage * screenWidth) / 100;
+};
 
-export default function AppNavigator() {
-  const [detailsMode, setDetailsMode] = useState({ isDetails: false, details: null });
+const responsiveHeight = (percentage) => {
+  return (percentage * screenHeight) / 100;
+};
 
-  const handleSetDetailsMode = useCallback((mode) => {
+const responsiveFont = (percentage) => {
+  return (percentage * screenWidth) / 100;
+};
+
+export default function AppNavigator({ navigation }) {
+  const [detailsMode, setDetailsMode] = React.useState({ isDetails: false, details: null });
+
+  const handleSetDetailsMode = React.useCallback((mode) => {
     setDetailsMode(mode);
   }, []);
 
   if (detailsMode.isDetails) {
+    const hotel = detailsMode.details || ELYSIUM_GARDENS_DETAILS;
     return (
       <View style={{ flex: 1 }}>
         <HotelDetailsScreen
-          hotel={detailsMode.details || ELYSIUM_GARDENS_DETAILS}
+          hotel={hotel}
           onBackPress={() => handleSetDetailsMode({ isDetails: false, details: null })}
+          onBookPress={() =>
+            navigation && typeof navigation.navigate === 'function'
+              ? navigation.navigate('BookingStack', { screen: 'BookingInfo', params: { hotel } })
+              : null
+          }
         />
       </View>
     );
@@ -44,16 +58,16 @@ export default function AppNavigator() {
         tabBarIndicatorStyle: { height: 0 },
         tabBarStyle: {
           backgroundColor: '#F4F7FF',
-          height: responsiveHeight(10),
+          height: responsiveHeight(10), 
           borderTopWidth: 1,
           borderTopColor: '#A2A5AD',
-          paddingHorizontal: responsiveWidth(2),
+          paddingHorizontal: responsiveWidth(2), 
           elevation: 5,
           shadowOpacity: 0.1,
           position: 'relative',
         },
         tabBarItemStyle: {
-          height: responsiveHeight(9),
+          height: responsiveHeight(9), 
           paddingVertical: responsiveHeight(0.5),
         },
         tabBarActiveTintColor: '#4B75E9',
@@ -61,12 +75,12 @@ export default function AppNavigator() {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarLabelStyle: {
-          fontSize: responsiveFont(3),
+          fontSize: responsiveFont(3), 
           fontWeight: '600',
           marginBottom: responsiveHeight(0.5),
         },
         tabBarIconStyle: {
-          marginTop: responsiveHeight(0.5),
+          marginTop: responsiveHeight(0.5), 
           marginBottom: 0,
         },
         tabBarIcon: ({ focused, color }) => {
@@ -80,14 +94,8 @@ export default function AppNavigator() {
       })}
     >
       <Tab.Screen name="Home">
-        {(props) => (
-          <HomeScreen
-            {...props}
-            setDetailsMode={handleSetDetailsMode}
-          />
-        )}
+        {(props) => <HomeScreen {...props} setDetailsMode={handleSetDetailsMode} />}
       </Tab.Screen>
-
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
