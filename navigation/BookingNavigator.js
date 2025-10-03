@@ -16,6 +16,7 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Re-added AsyncStorage
 
 const { width, height } = Dimensions.get('window');
 const responsiveWidth = (percentage) => (percentage * width) / 100;
@@ -73,7 +74,8 @@ function BookingProvider({ initialHotel, children }) {
       name: 'Elysium Gardens', 
       location: 'Paris, France', 
       price: '1500.00', 
-      originalPrice: '1800.00'
+      originalPrice: '1800.00',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop'
     },
     checkIn: null,
     checkOut: null,
@@ -83,8 +85,62 @@ function BookingProvider({ initialHotel, children }) {
     guestInfo: { name: 'Nicole Warron', email: 'nicolewarron@gmail.com', phone: '0987654321' },
     paymentSuccess: null,
   });
-  
-  const value = useMemo(() => ({ state, setState }), [state]);
+
+  const resetBookingState = () => {
+    setState(s => ({
+      ...s,
+      checkIn: null,
+      checkOut: null,
+      guests: 1,
+      rooms: 1,
+      paymentSuccess: null
+    }));
+  };
+
+  // UPDATED: Function is now async and saves booking to AsyncStorage
+  const addBooking = async (bookingData) => { 
+    const newBooking = {
+      id: Date.now().toString(),
+      ...bookingData,
+      status: 'confirmed',
+      bookingDate: new Date().toISOString()
+    };
+    
+    try {
+      // 1. Load existing bookings
+      const storedBookingsJSON = await AsyncStorage.getItem('userBookings');
+      
+      const storedBookings = storedBookingsJSON ? JSON.parse(storedBookingsJSON) : {
+        upcoming: [],
+        completed: [],
+        cancelled: []
+      };
+      
+      // 2. Add the new booking to the upcoming list
+      const updatedBookings = {
+        ...storedBookings,
+        upcoming: [...storedBookings.upcoming, newBooking]
+      };
+
+      // 3. Save the updated bookings object back to AsyncStorage
+      await AsyncStorage.setItem('userBookings', JSON.stringify(updatedBookings));
+      
+      return newBooking;
+
+    } catch (error) {
+      console.error('Error saving new booking:', error);
+      Alert.alert('Booking Error', 'Could not save your booking locally.');
+      throw error;
+    }
+  };
+
+  const value = useMemo(() => ({ 
+    state, 
+    setState,
+    addBooking, 
+    resetBookingState
+  }), [state]);
+
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
 }
 
@@ -113,7 +169,6 @@ function CustomHeader({ title, navigation, showBack = true, onBackPress }) {
             left: responsiveWidth(1), 
             padding: responsiveWidth(4),
             zIndex: 10,
-            // Lower the back arrow icon slightly
             top: Platform.OS === 'ios' ? responsiveHeight(3.2) : responsiveHeight(2.8), 
           }}
           onPress={onBackPress || (() => navigation.goBack())}
@@ -253,7 +308,6 @@ function CalendarModal({ visible, onClose, onDateSelect, mode, selectedDates }) 
     const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const formattedDate = `${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${selectedDate.getDate().toString().padStart(2, '0')}`;
     
-    // Date validation
     if (mode === 'checkout') {
       const checkInDate = selectedDates.checkIn;
       const checkInTime = checkInDate ? new Date(checkInDate).setHours(0, 0, 0, 0) : null;
@@ -375,7 +429,6 @@ function CalendarModal({ visible, onClose, onDateSelect, mode, selectedDates }) 
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()} 
         >
-          {/* Modern Drag Handle */}
           <View style={{
             alignItems: 'center',
             paddingVertical: responsiveHeight(1),
@@ -440,7 +493,7 @@ function CalendarModal({ visible, onClose, onDateSelect, mode, selectedDates }) 
               style={{
                 backgroundColor: PRIMARY_BLUE,
                 paddingVertical: responsiveHeight(1.8),
-                borderRadius: responsiveWidth(10), // Cylindrical button
+                borderRadius: responsiveWidth(10), 
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -493,7 +546,6 @@ function BottomSheetModal({ visible, onClose, title, children, showBackButton = 
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
-          {/* Drag Handle */}
           <View style={{
             alignItems: 'center',
             paddingVertical: responsiveHeight(1),
@@ -533,7 +585,6 @@ function BottomSheetModal({ visible, onClose, title, children, showBackButton = 
             <Text style={{ fontWeight: '700', fontSize: responsiveFont(5.5), marginTop: Platform.OS === 'ios' ? responsiveHeight(0.5) : 0 }}>{title}</Text>
           </View>
 
-          {/* Modal Content */}
           <ScrollView contentContainerStyle={{ paddingHorizontal: responsiveWidth(5), flexGrow: 1 }}>
             {children}
           </ScrollView>
@@ -554,7 +605,6 @@ function BookingInfoScreen({ navigation }) {
 
   const handleDateSelect = (checkIn, checkOut) => {
     if (checkIn) {
-      // If check-in is selected, reset check-out
       setState(s => ({ ...s, checkIn, checkOut: null }));
     } else if (checkOut) {
       setState(s => ({ ...s, checkOut }));
@@ -619,17 +669,7 @@ function BookingInfoScreen({ navigation }) {
         </View>
 
         <Text style={{ color: ACCENT_GREY, fontSize: responsiveFont(3.5) }}>Guests</Text>
-        <View style={{
-          backgroundColor: LIGHT_GREY,
-          borderRadius: responsiveWidth(2),
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: responsiveWidth(3),
-          height: responsiveHeight(6),
-          marginTop: 6,
-          marginBottom: responsiveHeight(2)
-        }}>
+        <View style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(2), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: responsiveWidth(3), height: responsiveHeight(6), marginTop: 6, marginBottom: responsiveHeight(2) }}>
           <Text style={{ fontWeight: '600' }}>{state.guests} Guests</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={() => setState(s => ({ ...s, guests: Math.max(1, s.guests - 1) }))} style={{ padding: responsiveWidth(2) }}>
@@ -643,16 +683,7 @@ function BookingInfoScreen({ navigation }) {
         </View>
 
         <Text style={{ color: ACCENT_GREY, fontSize: responsiveFont(3.5) }}>Rooms</Text>
-        <View style={{
-          backgroundColor: LIGHT_GREY,
-          borderRadius: responsiveWidth(2),
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: responsiveWidth(3),
-          height: responsiveHeight(6),
-          marginTop: 6
-        }}>
+        <View style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(2), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: responsiveWidth(3), height: responsiveHeight(6), marginTop: 6 }}>
           <Text style={{ fontWeight: '600' }}>{state.rooms} Rooms</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={() => setState(s => ({ ...s, rooms: Math.max(1, s.rooms - 1) }))} style={{ padding: responsiveWidth(2) }}>
@@ -666,12 +697,7 @@ function BookingInfoScreen({ navigation }) {
         </View>
 
         {nights > 0 && (
-          <View style={{
-            marginTop: responsiveHeight(3),
-            padding: responsiveWidth(4),
-            backgroundColor: LIGHT_GREY,
-            borderRadius: responsiveWidth(3),
-          }}>
+          <View style={{ marginTop: responsiveHeight(3), padding: responsiveWidth(4), backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(3), }}>
             <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1) }}>
               Price Summary
             </Text>
@@ -718,14 +744,20 @@ function BookingInfoScreen({ navigation }) {
 
 function PaymentMethodsScreen({ navigation }) {
   const { state } = useBooking();
-  // Ensure default is 'card' if a card exists, otherwise 'cash'
-  const defaultSelection = state.card && state.card.number !== 'XXXX' ? 'card' : 'cash'; 
+  const defaultSelection = state.card && state.card.number !== 'XXXX' ? 'card' : 'cash';
   const [selected, setSelected] = useState(defaultSelection);
   const [showModal, setShowModal] = useState(true);
 
   const PaymentOption = ({ icon, title, subtitle, isSelected, onPress }) => (
     <TouchableOpacity
-      style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: responsiveHeight(1.8), borderBottomWidth: 0.5, borderBottomColor: LIGHT_GREY }}
+      style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingVertical: responsiveHeight(1.8),
+        borderBottomWidth: 0.5,
+        borderBottomColor: LIGHT_GREY
+      }}
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -737,8 +769,11 @@ function PaymentMethodsScreen({ navigation }) {
       </View>
       <View
         style={{
-          width: responsiveWidth(5), height: responsiveWidth(5), borderRadius: responsiveWidth(5),
-          borderWidth: isSelected ? 0 : 2, borderColor: '#DDD',
+          width: responsiveWidth(5),
+          height: responsiveWidth(5),
+          borderRadius: responsiveWidth(5),
+          borderWidth: isSelected ? 0 : 2,
+          borderColor: '#DDD',
           backgroundColor: isSelected ? PRIMARY_BLUE : 'transparent',
           justifyContent: 'center',
           alignItems: 'center',
@@ -759,99 +794,65 @@ function PaymentMethodsScreen({ navigation }) {
       title="Payment Methods"
       navigation={navigation}
     >
-        
-
-        <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1.5), marginTop: responsiveHeight(2) }}>Choose Method</Text>
-
-        <View style={{ backgroundColor: '#fff', paddingHorizontal: responsiveWidth(5), paddingVertical: responsiveHeight(1), borderRadius: responsiveWidth(3), elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-          <PaymentOption
-            icon="cash-outline"
-            title="Cash"
-            subtitle="Pay at property"
-            isSelected={selected === 'cash'}
-            onPress={() => setSelected('cash')}
-          />
-          <PaymentOption
-            icon="card-outline"
-            title={`Visa •••• ${state.card?.number || 'XXXX'}`}
-            subtitle={`Expiry ${state.card?.expiry || 'XX/XX'}`}
-            isSelected={selected === 'card'}
-            onPress={() => setSelected('card')}
-          />
-
-          <TouchableOpacity
-            style={{
-              borderWidth: 1, borderColor: PRIMARY_BLUE, padding: responsiveWidth(3), borderRadius: responsiveWidth(3),
-              alignItems: 'center', marginTop: responsiveHeight(2), marginBottom: responsiveHeight(1.5),
-              backgroundColor: '#E6EFFF'
-            }}
-            onPress={() => navigation.navigate('AddCard')}
-          >
-            <Text style={{ color: PRIMARY_BLUE, fontWeight: '700', fontSize: responsiveFont(4) }}>+ Add New Card</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ paddingVertical: responsiveHeight(3) }}>
-            <TouchableOpacity
-                style={{
-                backgroundColor: PRIMARY_BLUE,
-                paddingVertical: responsiveHeight(1.8),
-                borderRadius: responsiveWidth(10), // Cylindrical button
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: responsiveHeight(6),
-                }}
-                onPress={() => navigation.navigate('GuestInfo')}
-            >
-                <Text style={{ 
-                color: '#fff', 
-                fontWeight: '700', 
-                fontSize: responsiveFont(4.2),
-                textAlign: 'center',
-                }}>Continue</Text>
-            </TouchableOpacity>
-        </View>
+      <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1.5), marginTop: responsiveHeight(2) }}>Choose Method</Text>
+      <View style={{ backgroundColor: '#fff', paddingHorizontal: responsiveWidth(5), paddingVertical: responsiveHeight(1), borderRadius: responsiveWidth(3), elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+        <PaymentOption
+          icon="cash-outline"
+          title="Cash"
+          subtitle="Pay at property"
+          isSelected={selected === 'cash'}
+          onPress={() => setSelected('cash')}
+        />
+        <PaymentOption
+          icon="card-outline"
+          title={`Visa •••• ${state.card?.number || 'XXXX'}`}
+          subtitle={`Expiry ${state.card?.expiry || 'XX/XX'}`}
+          isSelected={selected === 'card'}
+          onPress={() => setSelected('card')}
+        />
+        <TouchableOpacity 
+          style={{ 
+            borderWidth: 1, 
+            borderColor: PRIMARY_BLUE, 
+            padding: responsiveWidth(3), 
+            borderRadius: responsiveWidth(3), 
+            alignItems: 'center', 
+            marginTop: responsiveHeight(2), 
+            marginBottom: responsiveHeight(1.5),
+            backgroundColor: '#E6EFFF'
+          }}
+          onPress={() => navigation.navigate('AddCard')}
+        >
+          <Text style={{ color: PRIMARY_BLUE, fontWeight: '700', fontSize: responsiveFont(4) }}>+ Add New Card</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={{ paddingVertical: responsiveHeight(3) }}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: PRIMARY_BLUE,
+            paddingVertical: responsiveHeight(1.8),
+            borderRadius: responsiveWidth(10), 
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: responsiveHeight(6),
+          }}
+          onPress={() => navigation.navigate('GuestInfo')}
+        >
+          <Text style={{ 
+            color: '#fff', 
+            fontWeight: '700', 
+            fontSize: responsiveFont(4.2),
+            textAlign: 'center',
+          }}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </BottomSheetModal>
   );
 }
 
 function AddCardScreen({ navigation }) {
-  const { setState } = useBooking();
-  const [number, setNumber] = useState('');
-  const [name, setName] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
   const [showModal, setShowModal] = useState(true);
-
-  function saveCard() {
-    if (!number || !name || !expiry || !cvv) {
-      Alert.alert('Incomplete Details', 'Please fill in all card details.');
-      return;
-    }
-    const lastFour = number.length >= 4 ? number.replace(/\s/g, '').slice(-4) : number.replace(/\s/g, '');
-    setState(s => ({ ...s, card: { number: lastFour, name, expiry } }));
-    navigation.navigate('CardAdded', { cardName: name, lastFour });
-  }
-
-  const formatCardNumber = (text) => {
-    let cleanText = text.replace(/[^0-9]/g, '');
-    let formatted = '';
-    for (let i = 0; i < cleanText.length; i++) {
-      if (i > 0 && i % 4 === 0) {
-        formatted += ' ';
-      }
-      formatted += cleanText[i];
-    }
-    setNumber(formatted.slice(0, 19));
-  };
-  
-  const formatExpiry = (text) => {
-    let cleanText = text.replace(/[^0-9]/g, '');
-    if (cleanText.length > 2) {
-        cleanText = `${cleanText.slice(0, 2)}/${cleanText.slice(2, 4)}`;
-    }
-    setExpiry(cleanText);
-  };
 
   return (
     <BottomSheetModal
@@ -863,455 +864,528 @@ function AddCardScreen({ navigation }) {
       title="Add New Card"
       navigation={navigation}
     >
-        <View style={{
-            backgroundColor: PRIMARY_BLUE,
-            padding: responsiveWidth(5),
-            borderRadius: responsiveWidth(4),
-            height: responsiveHeight(25),
-            justifyContent: 'space-between',
-            marginTop: responsiveHeight(2),
-            marginBottom: responsiveHeight(3)
-        }}>
-            <View style={{ alignSelf: 'flex-end', padding: 5, backgroundColor: 'white', borderRadius: 5 }}>
-                <Text style={{ fontSize: responsiveFont(3.5), fontWeight: '700' }}>Visa</Text>
-            </View>
-            <View>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: responsiveFont(5.5), letterSpacing: 1 }}>
-                {number || '•••• •••• •••• ••••'}
-                </Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: responsiveHeight(3) }}>
-                    <View>
-                        <Text style={{ color: '#fff', fontSize: responsiveFont(3) }}>Cardholder Name</Text>
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: responsiveFont(4) }}>{name || 'Nicole Warron'}</Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ color: '#fff', fontSize: responsiveFont(3) }}>Expiry</Text>
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: responsiveFont(4) }}>{expiry || 'MM/YY'}</Text>
-                    </View>
-                </View>
-            </View>
+      <View style={{ marginTop: responsiveHeight(2) }}>
+        <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Card Number</Text>
+        <TextInput
+          style={{
+            backgroundColor: LIGHT_GREY,
+            borderRadius: responsiveWidth(2),
+            paddingHorizontal: responsiveWidth(4),
+            paddingVertical: responsiveHeight(1.5),
+            fontSize: responsiveFont(4),
+            marginBottom: responsiveHeight(2),
+          }}
+          placeholder="XXXX XXXX XXXX XXXX"
+          keyboardType="numeric"
+          maxLength={19}
+        />
+
+        <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Name on Card</Text>
+        <TextInput
+          style={{
+            backgroundColor: LIGHT_GREY,
+            borderRadius: responsiveWidth(2),
+            paddingHorizontal: responsiveWidth(4),
+            paddingVertical: responsiveHeight(1.5),
+            fontSize: responsiveFont(4),
+            marginBottom: responsiveHeight(2),
+          }}
+          placeholder="Nicole Warron"
+        />
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ width: '48%' }}>
+            <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Expiry Date (MM/YY)</Text>
+            <TextInput
+              style={{
+                backgroundColor: LIGHT_GREY,
+                borderRadius: responsiveWidth(2),
+                paddingHorizontal: responsiveWidth(4),
+                paddingVertical: responsiveHeight(1.5),
+                fontSize: responsiveFont(4),
+              }}
+              placeholder="MM/YY"
+              keyboardType="numeric"
+              maxLength={5}
+            />
+          </View>
+          
+          <View style={{ width: '48%' }}>
+            <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>CVV</Text>
+            <TextInput
+              style={{
+                backgroundColor: LIGHT_GREY,
+                borderRadius: responsiveWidth(2),
+                paddingHorizontal: responsiveWidth(4),
+                paddingVertical: responsiveHeight(1.5),
+                fontSize: responsiveFont(4),
+              }}
+              placeholder="XXX"
+              keyboardType="numeric"
+              maxLength={4}
+            />
+          </View>
         </View>
 
-        <TextInput
-            placeholder="Card number"
-            keyboardType="numeric"
-            value={number}
-            onChangeText={formatCardNumber}
-            style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(3), padding: responsiveWidth(4), marginTop: responsiveHeight(1.5), fontSize: responsiveFont(4) }}
-        />
-        <TextInput
-            placeholder="Name on card"
-            value={name}
-            onChangeText={setName}
-            style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(3), padding: responsiveWidth(4), marginTop: responsiveHeight(1.5), fontSize: responsiveFont(4) }}
-        />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: responsiveHeight(5) }}>
-            <TextInput
-                placeholder="MM/YY"
-                keyboardType="numeric"
-                value={expiry}
-                onChangeText={formatExpiry}
-                maxLength={5}
-                style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(3), padding: responsiveWidth(4), marginTop: responsiveHeight(1.5), width: '48%', fontSize: responsiveFont(4) }}
-            />
-            <TextInput
-                placeholder="CVV"
-                keyboardType="numeric"
-                secureTextEntry
-                value={cvv}
-                onChangeText={setCvv}
-                maxLength={4}
-                style={{ backgroundColor: LIGHT_GREY, borderRadius: responsiveWidth(3), padding: responsiveWidth(4), marginTop: responsiveHeight(1.5), width: '48%', fontSize: responsiveFont(4) }}
-            />
+        <View style={{ paddingVertical: responsiveHeight(4) }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: PRIMARY_BLUE,
+              paddingVertical: responsiveHeight(1.8),
+              borderRadius: responsiveWidth(10), 
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: responsiveHeight(6),
+            }}
+            onPress={() => navigation.navigate('CardAdded')}
+          >
+            <Text style={{ 
+              color: '#fff', 
+              fontWeight: '700', 
+              fontSize: responsiveFont(4.2),
+              textAlign: 'center',
+            }}>Save Card</Text>
+          </TouchableOpacity>
         </View>
-        
-        <View style={{ paddingVertical: responsiveHeight(2) }}>
-            <TouchableOpacity
-                style={{
-                backgroundColor: PRIMARY_BLUE,
-                paddingVertical: responsiveHeight(1.8),
-                borderRadius: responsiveWidth(10), // Cylindrical button
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: responsiveHeight(6),
-                }}
-                onPress={saveCard}
-            >
-                <Text style={{ 
-                color: '#fff', 
-                fontWeight: '700', 
-                fontSize: responsiveFont(4.2),
-                textAlign: 'center',
-                }}>Add Card</Text>
-            </TouchableOpacity>
-        </View>
+      </View>
     </BottomSheetModal>
   );
 }
 
 function CardAddedScreen({ navigation }) {
-  const { state } = useBooking();
-  const lastFour = state.card?.number || 'XXXX';
-
+  const [showModal, setShowModal] = useState(true);
+  
   useEffect(() => {
-    // Automatically dismiss the success confirmation after a short delay
-    const timer = setTimeout(() => {
+    if (showModal) {
+      setTimeout(() => {
+        setShowModal(false);
         navigation.goBack();
-    }, 2000); 
-
-    return () => clearTimeout(timer);
-  }, [navigation]);
+      }, 1500); 
+    }
+  }, [showModal, navigation]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: responsiveWidth(85), alignItems: 'center', padding: responsiveWidth(6), backgroundColor: '#fff', borderRadius: responsiveWidth(4) }}>
-        <Ionicons name="checkmark-circle-outline" size={responsiveFont(15)} color={PRIMARY_BLUE} />
-        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5.5), marginTop: responsiveHeight(2) }}>Card Added!</Text>
-        <Text style={{ color: ACCENT_GREY, marginTop: responsiveHeight(1), textAlign: 'center' }}>
-          Card ending in ••••{lastFour} has been saved.
-        </Text>
+    <Modal
+      visible={showModal}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={() => {}}
+    >
+      <View style={{
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <View style={{
+          backgroundColor: '#fff',
+          padding: responsiveWidth(10),
+          borderRadius: responsiveWidth(5),
+          alignItems: 'center',
+          maxWidth: responsiveWidth(80),
+        }}>
+          <Ionicons name="checkmark-circle" size={responsiveFont(12)} color={PRIMARY_BLUE} />
+          <Text style={{ fontWeight: '700', fontSize: responsiveFont(6), marginTop: responsiveHeight(2) }}>Card Added!</Text>
+          <Text style={{ color: ACCENT_GREY, fontSize: responsiveFont(4), marginTop: responsiveHeight(1), textAlign: 'center' }}>
+            Your Visa card ending in 2317 has been saved successfully.
+          </Text>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
 function GuestInfoScreen({ navigation }) {
   const { state, setState } = useBooking();
-  const [name, setName] = useState(state.guestInfo.name);
-  const [email, setEmail] = useState(state.guestInfo.email);
-  const [phone, setPhone] = useState(state.guestInfo.phone);
 
-  function next() {
-    if (!name || !email || !phone) {
-      Alert.alert('Incomplete Details', 'Please fill in all guest information.');
-      return;
-    }
-    setState(s => ({ ...s, guestInfo: { name, email, phone } }));
-    navigation.navigate('Review');
-  }
-
-  const inputStyle = {
-    backgroundColor: LIGHT_GREY,
-    padding: responsiveWidth(4),
-    borderRadius: responsiveWidth(3),
-    marginTop: responsiveHeight(1.5),
-    fontSize: responsiveFont(4),
-    fontWeight: '500'
-  };
+  const isReadyToProceed = state.guestInfo.name && state.guestInfo.email && state.guestInfo.phone;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <CustomHeader title="Guest Info" navigation={navigation} />
-
-      <View style={{ 
+      <CustomHeader title="Guest Information" navigation={navigation} showBack={true} />
+      
+      <ScrollView contentContainerStyle={{ 
         paddingHorizontal: responsiveWidth(5), 
-        paddingTop: responsiveHeight(2),
-        flex: 1,
-        paddingBottom: responsiveHeight(12),
+        paddingTop: responsiveHeight(2), 
+        paddingBottom: responsiveHeight(12) 
       }}>
-        {/* Hotel Info Snippet REMOVED as requested */}
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginBottom: responsiveHeight(2) }}>
+          Primary Guest Details
+        </Text>
+        
+        <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Full Name</Text>
+        <TextInput
+          style={{
+            backgroundColor: LIGHT_GREY,
+            borderRadius: responsiveWidth(2),
+            paddingHorizontal: responsiveWidth(4),
+            paddingVertical: responsiveHeight(1.5),
+            fontSize: responsiveFont(4),
+            marginBottom: responsiveHeight(2),
+          }}
+          placeholder="Nicole Warron"
+          value={state.guestInfo.name}
+          onChangeText={(text) => setState(s => ({ ...s, guestInfo: { ...s.guestInfo, name: text } }))}
+        />
 
-        <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1.5), marginTop: responsiveHeight(1) }}>Guest Information</Text>
+        <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Email Address</Text>
+        <TextInput
+          style={{
+            backgroundColor: LIGHT_GREY,
+            borderRadius: responsiveWidth(2),
+            paddingHorizontal: responsiveWidth(4),
+            paddingVertical: responsiveHeight(1.5),
+            fontSize: responsiveFont(4),
+            marginBottom: responsiveHeight(2),
+          }}
+          placeholder="nicolewarron@gmail.com"
+          keyboardType="email-address"
+          value={state.guestInfo.email}
+          onChangeText={(text) => setState(s => ({ ...s, guestInfo: { ...s.guestInfo, email: text } }))}
+        />
 
-        <TextInput placeholder="Full name" value={name} onChangeText={setName} style={inputStyle} />
-        <TextInput placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" style={inputStyle} />
-        <TextInput placeholder="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" style={inputStyle} />
-      </View>
+        <Text style={{ color: ACCENT_GREY, marginBottom: responsiveHeight(1), fontSize: responsiveFont(3.5) }}>Phone Number</Text>
+        <TextInput
+          style={{
+            backgroundColor: LIGHT_GREY,
+            borderRadius: responsiveWidth(2),
+            paddingHorizontal: responsiveWidth(4),
+            paddingVertical: responsiveHeight(1.5),
+            fontSize: responsiveFont(4),
+            marginBottom: responsiveHeight(4),
+          }}
+          placeholder="0987654321"
+          keyboardType="phone-pad"
+          value={state.guestInfo.phone}
+          onChangeText={(text) => setState(s => ({ ...s, guestInfo: { ...s.guestInfo, phone: text } }))}
+        />
+
+      </ScrollView>
 
       <FloatingBottomButton
-        title="Continue"
-        onPress={next}
+        title="Continue to Review"
+        onPress={() => navigation.navigate('Review')}
+        disabled={!isReadyToProceed}
       />
     </SafeAreaView>
   );
 }
 
 function ReviewScreen({ navigation }) {
-  const { state, setState } = useBooking();
-  const hotel = state.hotel;
-  
-  const totalPrice = calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms);
-  const nights = calculateNights(state.checkIn, state.checkOut);
-  // Calculate discount based on mocked original price
-  const discount = Math.max(0, parsePrice(hotel.originalPrice) - totalPrice.basePrice);
+  const { state, addBooking, setState } = useBooking();
 
-  function pay() {
-    // Simulate successful payment
-    setState(s => ({ ...s, paymentSuccess: true }));
-    // Navigate to the new animated success modal
-    navigation.navigate('Success');
-  }
+  const totalPriceDetails = useMemo(() => {
+    return calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms);
+  }, [state.hotel, state.checkIn, state.checkOut, state.rooms]);
 
-  const DetailRow = ({ label, value, isTotal = false }) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: responsiveHeight(0.5) }}>
-      <Text style={{ color: isTotal ? '#000' : ACCENT_GREY, fontWeight: isTotal ? '700' : '400', fontSize: responsiveFont(4) }}>{label}</Text>
-      <Text style={{ fontWeight: isTotal ? '700' : '500', fontSize: responsiveFont(4) }}>{value}</Text>
-    </View>
-  );
+  const handleBookNow = async () => { // Made async to await addBooking
+    try {
+        const newBooking = await addBooking({
+            hotel: state.hotel,
+            checkIn: state.checkIn,
+            checkOut: state.checkOut,
+            rooms: state.rooms,
+            guests: state.guests,
+            totalPrice: totalPriceDetails.total,
+            guestInfo: state.guestInfo,
+        });
+        
+        setState(s => ({ ...s, paymentSuccess: true }));
+
+        // Pass the booking data to the success screen, though it's mainly for display
+        navigation.navigate('Success', { booking: newBooking });
+    } catch (e) {
+        // Error already handled in addBooking
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <CustomHeader title="Review Summary" navigation={navigation} />
-
+      <CustomHeader title="Review & Confirm" navigation={navigation} showBack={true} />
+      
       <ScrollView contentContainerStyle={{ 
         paddingHorizontal: responsiveWidth(5), 
-        paddingBottom: responsiveHeight(12), 
-        paddingTop: responsiveHeight(2) 
+        paddingTop: responsiveHeight(2), 
+        paddingBottom: responsiveHeight(12) 
       }}>
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginBottom: responsiveHeight(2) }}>
+          Booking Details
+        </Text>
+        <HotelInfoSnippet 
+          hotel={state.hotel} 
+          showNights={true}
+          nights={totalPriceDetails.nights}
+        />
 
         <View style={{
-          backgroundColor: '#fff',
-          padding: responsiveWidth(5),
+          backgroundColor: LIGHT_GREY,
           borderRadius: responsiveWidth(3),
-          elevation: 3,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
-          marginTop: responsiveHeight(2)
+          padding: responsiveWidth(4),
+          marginTop: responsiveHeight(2),
         }}>
-          <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), borderBottomWidth: 0.5, borderBottomColor: LIGHT_GREY, paddingBottom: responsiveHeight(1) }}>Booking Details</Text>
-          <DetailRow label="Hotel Name" value={hotel.name} />
-          <DetailRow label="Check In / Check Out" value={`${state.checkIn || '-'} / ${state.checkOut || '-'}`} />
-          <DetailRow label="Guests / Rooms" value={`${state.guests} / ${state.rooms}`} />
-          <DetailRow label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
-
-          <View style={{ borderTopWidth: 0.5, borderTopColor: LIGHT_GREY, marginTop: responsiveHeight(1.5), paddingTop: responsiveHeight(1.5) }}>
-            <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1) }}>Guest Details</Text>
-            <DetailRow label="Name" value={state.guestInfo.name} />
-            <DetailRow label="Email" value={state.guestInfo.email} />
-          </View>
-
-          <View style={{ borderTopWidth: 0.5, borderTopColor: LIGHT_GREY, marginTop: responsiveHeight(1.5), paddingTop: responsiveHeight(1.5) }}>
-            <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1) }}>Payment Details</Text>
-            <DetailRow label="Nightly Rate" value={formatPrice(parsePrice(hotel.price))} />
-            <DetailRow label="Original Price" value={formatPrice(parsePrice(hotel.originalPrice))} />
-            <DetailRow label="Discount" value={`-${formatPrice(discount)}`} />
-            <DetailRow label="Tax (10%)" value={formatPrice(totalPrice.tax)} />
-            <DetailRow label="Service Fee" value={formatPrice(totalPrice.serviceFee)} />
-          </View>
-
-          <View style={{ borderTopWidth: 1, borderTopColor: LIGHT_GREY, marginTop: responsiveHeight(1.5), paddingTop: responsiveHeight(1.5) }}>
-            <DetailRow label="Total" value={formatPrice(totalPrice.total)} isTotal={true} />
-          </View>
+          <DetailRow label="Check In" value={state.checkIn?.split('-').reverse().join('/')} />
+          <DetailRow label="Check Out" value={state.checkOut?.split('-').reverse().join('/')} />
+          <DetailRow label="Guests" value={`${state.guests} Adults`} />
+          <DetailRow label="Rooms" value={`${state.rooms} Room${state.rooms > 1 ? 's' : ''}`} />
         </View>
+        
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginTop: responsiveHeight(3), marginBottom: responsiveHeight(2) }}>
+          Guest Information
+        </Text>
+        <View style={{
+          backgroundColor: LIGHT_GREY,
+          borderRadius: responsiveWidth(3),
+          padding: responsiveWidth(4),
+        }}>
+          <DetailRow label="Name" value={state.guestInfo.name} />
+          <DetailRow label="Email" value={state.guestInfo.email} />
+          <DetailRow label="Phone" value={state.guestInfo.phone} />
+        </View>
+
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginTop: responsiveHeight(3), marginBottom: responsiveHeight(2) }}>
+          Payment Details
+        </Text>
+        <View style={{
+          backgroundColor: LIGHT_GREY,
+          borderRadius: responsiveWidth(3),
+          padding: responsiveWidth(4),
+        }}>
+          <DetailRow label="Method" value={`Visa •••• ${state.card?.number || 'XXXX'}`} />
+          <DetailRow label="Nights Price" value={formatPrice(totalPriceDetails.basePrice)} />
+          <DetailRow label="Tax (10%)" value={formatPrice(totalPriceDetails.tax)} />
+          <DetailRow label="Service Fee" value={formatPrice(totalPriceDetails.serviceFee)} />
+          <DetailRow label="Total" value={formatPrice(totalPriceDetails.total)} isTotal={true} />
+        </View>
+
       </ScrollView>
 
       <FloatingBottomButton
-        title={`Pay ${formatPrice(totalPrice.total)}`}
-        onPress={pay}
+        title={`Book Now - ${formatPrice(totalPriceDetails.total)}`}
+        onPress={handleBookNow}
       />
     </SafeAreaView>
   );
 }
 
-
-export function SuccessScreen({ navigation }) {
-  const { state } = useBooking();
-  const totalPrice = calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms);
-
-  const modalHeight = responsiveHeight(50);
-  const [animation] = useState(new Animated.Value(0));
-
-  useEffect(() => {
-    Animated.timing(animation, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [animation]);
-
-  const slideInStyle = {
-    transform: [
-      {
-        translateY: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [modalHeight, 0],
-        }),
-      },
-    ],
-  };
-
-  const handleDone = () => {
-    // FIX: Navigate back to MainTabs which contains the bottom tab navigator
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          { 
-            name: 'MainTabs',
-            state: {
-              routes: [{ name: 'Home' }],
-            }
-          },
-        ],
-      })
-    );
-  };
-
+function DetailRow({ label, value, isTotal = false }) {
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Dim background
-        justifyContent: 'flex-end', // Align modal content to the bottom
-      }}
-    >
-      <Animated.View
-        style={[
-          {
-            backgroundColor: 'white',
-            borderTopLeftRadius: responsiveWidth(8),
-            borderTopRightRadius: responsiveWidth(8),
-            padding: responsiveWidth(5),
-            height: modalHeight,
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -5 },
-            shadowOpacity: 0.1,
-            shadowRadius: 10,
-            elevation: 15,
-          },
-          slideInStyle, // Apply the slide-up animation style
-        ]
-      }>
-        <Ionicons name="checkmark-circle" size={responsiveWidth(20)} color="#28A745" style={{ marginBottom: responsiveHeight(2) }} />
-        <Text style={{ fontSize: responsiveFont(7), fontWeight: '800', color: '#1A202C', marginBottom: responsiveHeight(1) }}>
-          Payment Successful
-        </Text>
-        
-        <Text style={{ fontSize: responsiveFont(4.5), color: ACCENT_GREY, textAlign: 'center', marginBottom: responsiveHeight(1) }}>
-          Your booking is confirmed! Receipt downloaded.
-        </Text>
-        <Text style={{ fontSize: responsiveFont(4), fontWeight: '600', color: '#1A202C', marginBottom: responsiveHeight(4) }}>
-          Total Paid: {formatPrice(totalPrice.total)}
-        </Text>
-
-        <TouchableOpacity
-          style={{
-            backgroundColor: PRIMARY_BLUE,
-            paddingVertical: responsiveHeight(2),
-            paddingHorizontal: responsiveWidth(8),
-            // Cylindrical button for consistency
-            borderRadius: responsiveWidth(10), 
-            alignItems: 'center',
-            width: '100%',
-            shadowColor: PRIMARY_BLUE,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 5,
-            elevation: 8,
-          }}
-          onPress={() => navigation.navigate('EReceipt')} 
-        >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: responsiveFont(4.5) }}>View E-Receipt</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={{
-            marginTop: responsiveHeight(2),
-            padding: responsiveWidth(2),
-          }}
-          onPress={handleDone}
-        >
-          <Text style={{ color: ACCENT_GREY, fontWeight: '600', fontSize: responsiveFont(4) }}>Done</Text>
-        </TouchableOpacity>
-      </Animated.View>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: responsiveHeight(0.8), borderBottomWidth: isTotal ? 0 : 0.5, borderBottomColor: ACCENT_GREY, alignItems: 'center' }}>
+      <Text style={{ color: isTotal ? '#000' : ACCENT_GREY, fontWeight: isTotal ? '700' : '500', fontSize: responsiveFont(3.8) }}>{label}</Text>
+      <Text style={{ color: isTotal ? PRIMARY_BLUE : '#000', fontWeight: isTotal ? '800' : '600', fontSize: responsiveFont(4.2) }}>{value}</Text>
     </View>
   );
 }
-// E-Receipt Screen
-function EReceiptScreen({ navigation }) {
-  const { state } = useBooking();
-  const hotel = state.hotel;
-  const totalPrice = calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms);
-  const nights = calculateNights(state.checkIn, state.checkOut);
 
-  const DetailRow = ({ label, value }) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: responsiveHeight(0.5) }}>
-      <Text style={{ color: ACCENT_GREY, fontSize: responsiveFont(3.8) }}>{label}</Text>
-      <Text style={{ fontWeight: '500', fontSize: responsiveFont(3.8) }}>{value}</Text>
-    </View>
-  );
+function SuccessScreen({ navigation }) {
+  const { state, resetBookingState } = useBooking();
+  const [slideAnim] = useState(new Animated.Value(responsiveHeight(100)));
+
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [slideAnim]);
+
+  const booking = state.paymentSuccess === true ? { 
+    hotelName: state.hotel.name,
+    checkIn: state.checkIn,
+    checkOut: state.checkOut,
+    totalPrice: calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms).total
+  } : null;
+
+  if (!booking) {
+    return <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} />;
+  }
+  
+
+  const navigateToMainTab = (screenName) => {
+      resetBookingState();
+  
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            { 
+              name: 'MainTabs', 
+              params: {
+                screen: screenName,
+              }
+            },
+          ],
+        })
+      );
+      
+  };
+
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LIGHT_GREY }}>
-      <CustomHeader title="E-Receipt" navigation={navigation} />
-
-      <ScrollView contentContainerStyle={{ 
-        paddingHorizontal: responsiveWidth(5), 
-        paddingBottom: responsiveHeight(5), 
-        paddingTop: responsiveHeight(2) 
-      }}>
-        <HotelInfoSnippet 
-          hotel={hotel} 
-          showNights={true}
-          nights={nights}
-        />
-
-        <View style={{
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+      <Animated.View
+        style={{
           backgroundColor: '#fff',
-          padding: responsiveWidth(5),
-          borderRadius: responsiveWidth(3),
-          elevation: 3,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
-          marginTop: responsiveHeight(2),
-          alignItems: 'center'
-        }}>
-          <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1) }}>Booking Details</Text>
-          <View style={{ width: '100%', borderBottomWidth: 0.5, borderBottomColor: LIGHT_GREY, paddingBottom: responsiveHeight(1) }}>
-            <DetailRow label="Check In" value={state.checkIn || '-'} />
-            <DetailRow label="Check Out" value={state.checkOut || '-'} />
-            <DetailRow label="Guests" value={state.guests} />
-            <DetailRow label="Rooms" value={state.rooms} />
-            <DetailRow label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
-          </View>
+          borderTopLeftRadius: responsiveWidth(8),
+          borderTopRightRadius: responsiveWidth(8),
+          padding: responsiveWidth(8),
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <View style={{
+            width: responsiveWidth(15),
+            height: responsiveHeight(0.6),
+            backgroundColor: '#E0E0E0',
+            borderRadius: responsiveWidth(1.5),
+            marginBottom: responsiveHeight(2)
+          }} />
 
-          <View style={{ width: '100%', borderBottomWidth: 0.5, borderBottomColor: LIGHT_GREY, paddingVertical: responsiveHeight(1.5) }}>
-            <Text style={{ fontWeight: '700', fontSize: responsiveFont(4.5), marginBottom: responsiveHeight(1) }}>Payment Details</Text>
-            <DetailRow label="Amount Paid" value={formatPrice(totalPrice.total)} />
-            <DetailRow label="Payment Method" value={`Card •••• ${state.card?.number || 'XXXX'}`} />
-            <DetailRow label="Transaction ID" value={`#${Math.random().toString(36).substr(2, 9).toUpperCase()}`} />
-            <DetailRow label="Payment Date & Time" value={new Date().toLocaleString()} />
-          </View>
+          <Ionicons name="checkmark-circle" size={responsiveFont(15)} color={PRIMARY_BLUE} />
 
-          <View style={{ height: responsiveHeight(10), width: '80%', backgroundColor: LIGHT_GREY, marginTop: responsiveHeight(3), justifyContent: 'center', alignItems: 'center', borderRadius: responsiveWidth(2) }}>
-            <Text style={{ color: ACCENT_GREY, fontWeight: '700' }}>[Barcode Placeholder]</Text>
-          </View>
-        </View>
+          <Text style={{ fontWeight: '800', fontSize: responsiveFont(7), color: PRIMARY_BLUE, marginTop: responsiveHeight(2) }}>
+            Booking Confirmed!
+          </Text>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: responsiveHeight(3) }}>
-          <TouchableOpacity
-            style={{ 
-              borderWidth: 1, 
-              borderColor: PRIMARY_BLUE, 
-              paddingVertical: responsiveHeight(2), 
-              borderRadius: responsiveWidth(10), 
-              alignItems: 'center', 
-              width: '80%', 
-              backgroundColor: '#fff' 
-            }}
-            onPress={() => 
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [
-                    { 
-                      name: 'MainTabs',
-                      state: {
-                        routes: [{ name: 'Home' }],
-                      }
-                    },
-                  ],
-                })
-              )
-            }
+          <Text style={{ textAlign: 'center', fontSize: responsiveFont(4.2), color: ACCENT_GREY, marginTop: responsiveHeight(1.5), marginBottom: responsiveHeight(3) }}>
+            You have successfully booked {booking.hotelName} for the dates {booking.checkIn?.split('-').reverse().join('/')} to {booking.checkOut?.split('-').reverse().join('/')}.
+          </Text>
+
+          <View style={{
+            width: '100%',
+            backgroundColor: LIGHT_GREY,
+            padding: responsiveWidth(5),
+            borderRadius: responsiveWidth(3),
+            marginBottom: responsiveHeight(3)
+          }}>
+            <DetailRow label="Total Amount" value={formatPrice(booking.totalPrice)} isTotal={true} />
+            <View style={{ height: responsiveHeight(1) }} />
+            <DetailRow label="Payment Method" value={`Visa •••• ${state.card?.number || 'XXXX'}`} />
+          </View>
+          
+          <TouchableOpacity 
+            style={{ paddingVertical: responsiveHeight(1) }} 
+            onPress={() => navigateToMainTab('Calendar')} // Changed navigation call
           >
-            <Text style={{ color: PRIMARY_BLUE, fontWeight: '700', fontSize: responsiveFont(4) }}>Back to Home</Text>
+            <Text style={{ color: PRIMARY_BLUE, fontWeight: '700', fontSize: responsiveFont(4) }}>View My Bookings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={{ paddingVertical: responsiveHeight(1) }} 
+            onPress={() => navigateToMainTab('Home')} // Changed navigation call
+          >
+            <Text style={{ color: ACCENT_GREY, fontWeight: '600', fontSize: responsiveFont(4) }}>Back to Home</Text>
           </TouchableOpacity>
 
         </View>
+      </Animated.View>
+    </SafeAreaView>
+  );
+}
+
+
+function EReceiptScreen({ navigation }) {
+  const { state } = useBooking();
+
+  const totalPriceDetails = useMemo(() => {
+    return calculateTotalPrice(state.hotel, state.checkIn, state.checkOut, state.rooms);
+  }, [state.hotel, state.checkIn, state.checkOut, state.rooms]);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <CustomHeader title="E-Receipt" navigation={navigation} showBack={true} />
+      
+      <ScrollView contentContainerStyle={{ 
+        paddingHorizontal: responsiveWidth(5), 
+        paddingTop: responsiveHeight(2), 
+        paddingBottom: responsiveHeight(12) 
+      }}>
+        <View style={{ 
+          alignItems: 'center', 
+          paddingVertical: responsiveHeight(3), 
+          borderBottomWidth: 1, 
+          borderBottomColor: LIGHT_GREY 
+        }}>
+          <Ionicons name="checkmark-circle" size={responsiveFont(15)} color={PRIMARY_BLUE} />
+          <Text style={{ fontWeight: '700', fontSize: responsiveFont(5.5), marginTop: responsiveHeight(1) }}>Payment Successful</Text>
+          <Text style={{ fontWeight: '800', fontSize: responsiveFont(7), color: PRIMARY_BLUE, marginTop: responsiveHeight(0.5) }}>
+            {formatPrice(totalPriceDetails.total)}
+          </Text>
+          <Text style={{ color: ACCENT_GREY, fontSize: responsiveFont(3.8) }}>
+            Transaction ID: #HBDC{Date.now().toString().slice(-6)}
+          </Text>
+        </View>
+
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginTop: responsiveHeight(3), marginBottom: responsiveHeight(2) }}>
+          Booking Details
+        </Text>
+        <View style={{
+          backgroundColor: LIGHT_GREY,
+          borderRadius: responsiveWidth(3),
+          padding: responsiveWidth(4),
+        }}>
+          <DetailRow label="Hotel" value={state.hotel.name} />
+          <DetailRow label="Location" value={state.hotel.location} />
+          <DetailRow label="Check In" value={state.checkIn?.split('-').reverse().join('/')} />
+          <DetailRow label="Check Out" value={state.checkOut?.split('-').reverse().join('/')} />
+          <DetailRow label="Rooms" value={`${state.rooms} Room${state.rooms > 1 ? 's' : ''}`} />
+          <DetailRow label="Guests" value={`${state.guests} Adults`} />
+        </View>
+        
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginTop: responsiveHeight(3), marginBottom: responsiveHeight(2) }}>
+          Payment Breakdown
+        </Text>
+        <View style={{
+          backgroundColor: LIGHT_GREY,
+          borderRadius: responsiveWidth(3),
+          padding: responsiveWidth(4),
+        }}>
+          <DetailRow label="Nights Price" value={formatPrice(totalPriceDetails.basePrice)} />
+          <DetailRow label="Tax (10%)" value={formatPrice(totalPriceDetails.tax)} />
+          <DetailRow label="Service Fee" value={formatPrice(totalPriceDetails.serviceFee)} />
+          <View style={{ height: responsiveHeight(1), borderTopWidth: 1, borderTopColor: ACCENT_GREY, marginVertical: responsiveHeight(1) }} />
+          <DetailRow label="Total Paid" value={formatPrice(totalPriceDetails.total)} isTotal={true} />
+        </View>
+
+        <Text style={{ fontWeight: '700', fontSize: responsiveFont(5), marginTop: responsiveHeight(3), marginBottom: responsiveHeight(2) }}>
+          Guest Contact
+        </Text>
+        <View style={{
+          backgroundColor: LIGHT_GREY,
+          borderRadius: responsiveWidth(3),
+          padding: responsiveWidth(4),
+        }}>
+          <DetailRow label="Name" value={state.guestInfo.name} />
+          <DetailRow label="Email" value={state.guestInfo.email} />
+          <DetailRow label="Phone" value={state.guestInfo.phone} />
+        </View>
+
+        <TouchableOpacity 
+          style={{ 
+            marginTop: responsiveHeight(4), 
+            alignItems: 'center', 
+            paddingVertical: responsiveHeight(1)
+          }}
+          onPress={() => Alert.alert('Receipt Sent', 'The e-receipt has been sent to your email address.')}
+        >
+          <Text style={{ color: PRIMARY_BLUE, fontWeight: '700', fontSize: responsiveFont(4.5) }}>Email Receipt</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={{ 
+            marginTop: responsiveHeight(1), 
+            alignItems: 'center', 
+            paddingVertical: responsiveHeight(1)
+          }}
+          onPress={() => Alert.alert('Cancel Booking', 'Are you sure you want to cancel this booking? This action cannot be undone.')}
+        >
+          <Text style={{ color: '#FF3B30', fontWeight: '700', fontSize: responsiveFont(4.5) }}>Cancel Booking</Text>
+        </TouchableOpacity>
+        
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 
 export default function BookingNavigator({ route }) {
   const initialHotel = route?.params?.hotel || null;
